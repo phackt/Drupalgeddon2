@@ -161,7 +161,7 @@ if not $drupalversion
       puts "[!] WARNING: Might be patched! Found SA-CORE-2018-002: #{url}" if response.body.include? "SA-CORE-2018-002"
 
       # Try and get version from the file contents
-      $drupalversion = response.body.match(/Drupal (.*),/).to_s.slice(/Drupal (.*),/, 1).to_s.strip
+      $drupalversion = response.body.match(/Drupal (.*)[, ]/).to_s.slice(/Drupal (.*)[, ]/, 1).to_s.strip
 
       # If not, try and get it from the URL
       $drupalversion = uri.match(/core/)? "8.x" : "7.x" if $drupalversion.empty?
