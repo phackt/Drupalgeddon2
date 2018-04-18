@@ -213,14 +213,14 @@ $drupalversions.each do|version|
 
     if response.body.match(/#{random}/)
       puts "[+] Result : #{result}"
-      puts "[+] Target seems to be exploitable (Code execution)!"
+      puts "[+] Target #{$target} seems to be exploitable (Code execution)!"
       exit
     else
-      puts "[+] Target might to be exploitable?"
+      puts "[+] Target #{$target} might to be exploitable?"
     end
 
   else
-    puts "[!] Target is NOT exploitable ~ HTTP Response: #{response.code}"
+    puts "[!] Target #{$target} is NOT exploitable ~ HTTP Response: #{response.code}"
   end
   puts "-"*80
 end
