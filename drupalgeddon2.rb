@@ -16,7 +16,7 @@ require 'readline'
 
 
 # Settings - Proxy information (nil to disable)
-proxy_addr = 'localhost'
+proxy_addr = nil
 proxy_port = 8080
 
 
