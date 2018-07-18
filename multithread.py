@@ -156,12 +156,12 @@ def main(argv):
                     if not urlparse(url).hostname:
                         # We are detecting the right scheme
                         for found_url in domain_to_urls(hostname):
-                            sys.stdout.write('[!] debug: adding %s\n' % found_url)
-                            sys.stdout.flush()
+                            # sys.stdout.write('[!] debug: adding %s\n' % found_url)
+                            # sys.stdout.flush()
                             queueUrls.put(found_url)
                     else:
-                        sys.stdout.write('[!] debug: adding %s\n' % url)
-                        sys.stdout.flush()
+                        # sys.stdout.write('[!] debug: adding %s\n' % url)
+                        # sys.stdout.flush()
                         queueUrls.put(url)
                 else:
                     sys.stdout.write('[!] No dns resolution for %s\n' % hostname)
